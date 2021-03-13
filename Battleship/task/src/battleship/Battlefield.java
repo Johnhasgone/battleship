@@ -11,19 +11,21 @@ public class Battlefield {
     private int height = 10; // height of the battlefield
     private int width = 10;   // wide of the battlefield
 
-    private char[][] field = new char[height][width]; // main game field
+    private char[][] field = new char[height][width]; // main game field, ships are hidden from player
+    private final char[][] fogField = new char[height][width]; // game field, showing players shots without ships
     
-    private UserInputHandler inputHandler = new UserInputHandler();
+    private final UserInputHandler inputHandler = new UserInputHandler();
 
     public Battlefield() {
-        initField();
+        initField(field);
+        initField(fogField);
     }
 
     /**
      * Initiate starting condition of the field
      */
-    private void initField() {
-        for (char[] row : field)
+    private void initField(char[][] array) {
+        for (char[] row : array)
             Arrays.fill(row, fog);
     }
 
@@ -135,8 +137,9 @@ public class Battlefield {
 
     /**
      * Prints the current game field
+     * @param gameField field or fogField
      */
-    public void printField() {
+    public void printField(char[][] gameField) {
         System.out.print("\n  ");
         for (int i = 1; i <= width; i++) {
             if (i != width)
@@ -147,7 +150,7 @@ public class Battlefield {
         for (int i = 0; i < height; i++) {
             System.out.print((char) ('A' + i));
             for (int j = 0; j < width; j++) {
-                System.out.print(" " + field[i][j]);
+                System.out.print(" " + gameField[i][j]);
             }
             System.out.println();
         }
@@ -174,7 +177,7 @@ public class Battlefield {
         for (Ships ship : Ships.values()) {
             int[] coordinates = inputHandler.getShipCoordinates(ship);
             setTheShip(coordinates[0], coordinates[2], coordinates[1], coordinates[3]);
-            printField();
+            printField(field);
         }
     }
 
@@ -183,7 +186,7 @@ public class Battlefield {
      */
     public void startTheGame() {
         System.out.println("\nThe game starts!");
-        printField();
+        printField(fogField);
         takeAShot();
     }
 
@@ -195,14 +198,17 @@ public class Battlefield {
         boolean success;
         if (field[coord[0]][coord[1]] == cell) {
             field[coord[0]][coord[1]] = hit;
+            fogField[coord[0]][coord[1]] = hit;
             success = true;
         }
         else {
             field[coord[0]][coord[1]] = miss;
+            fogField[coord[0]][coord[1]] = miss;
             success = false;
         }
-        printField();
+        printField(fogField);
         System.out.println(success ? "\nYou hit a ship!" : "\nYou missed!");
+        printField(field);
 
     }
 
