@@ -12,6 +12,8 @@ public class Battlefield {
     private int width = 10;   // wide of the battlefield
 
     private char[][] field = new char[height][width]; // main game field
+    
+    private UserInputHandler inputHandler = new UserInputHandler();
 
     public Battlefield() {
         initField();
@@ -170,10 +172,38 @@ public class Battlefield {
      */
     public void fillTheField() {
         for (Ships ship : Ships.values()) {
-            int[] coordinates = new UserInputHandler().getUserInput(ship);
+            int[] coordinates = inputHandler.getShipCoordinates(ship);
             setTheShip(coordinates[0], coordinates[2], coordinates[1], coordinates[3]);
             printField();
         }
+    }
+
+    /**
+     * Start the game (prints the field after ship placement and gets the user shot)
+     */
+    public void startTheGame() {
+        System.out.println("\nThe game starts!");
+        printField();
+        takeAShot();
+    }
+
+    /**
+     * Take a shot
+     */
+    private void takeAShot() {
+        int[] coord = inputHandler.getShotCoordinates();
+        boolean success;
+        if (field[coord[0]][coord[1]] == cell) {
+            field[coord[0]][coord[1]] = hit;
+            success = true;
+        }
+        else {
+            field[coord[0]][coord[1]] = miss;
+            success = false;
+        }
+        printField();
+        System.out.println(success ? "\nYou hit a ship!" : "\nYou missed!");
+
     }
 
 
@@ -185,7 +215,12 @@ public class Battlefield {
         private final Scanner scanner = new Scanner(System.in);
         private final int[] coordinates = new int[4];
 
-        public int[] getUserInput(Ships ship) {
+        /**
+         * Get the ship coordinates from user input
+         * @param ship the ship which coordinates we want to get
+         * @return array with ship coordinates
+         */
+        public int[] getShipCoordinates(Ships ship) {
             System.out.printf("\nEnter the coordinates of the %s (%d cells):\n", ship.getDescription(), ship.getValue());
             String stringCoordinates;
             do {
@@ -195,7 +230,13 @@ public class Battlefield {
             return getIntCoordinatesFromString(stringCoordinates);
         }
 
-        public boolean checkCoordinates(String coordinates, Ships ship) {
+        /**
+         * Check if the coordinates are appropriate for ship placement
+         * @param coordinates coordinates from user input
+         * @param ship ship type
+         * @return result of the checking
+         */
+        private boolean checkCoordinates(String coordinates, Ships ship) {
 
             // check the initial format of user input
             if (!coordinates.matches("[A-J]\\d+ [A-J]\\d+"))
@@ -220,6 +261,11 @@ public class Battlefield {
             return false;
         }
 
+        /**
+         * Check if the ship coordinates are not crossing or too close to another ship
+         * @param coord ship coordinates
+         * @return result of the checking
+         */
         private boolean checkShipPlacement(int[] coord) {
             int iStart = coord[0] != 0 ? coord[0] - 1 : coord[0];
             int iEnd = coord[2] != height - 1 ? coord[2] + 1 : coord[2];
@@ -234,6 +280,11 @@ public class Battlefield {
             return true;
         }
 
+        /**
+         * Convert string ship coordinates to int array
+         * @param stringCoordinates ship coordinates
+         * @return array of ship coordinates
+         */
         private int[] getIntCoordinatesFromString(String stringCoordinates) {
             String[] tmpCoordinatesArray = stringCoordinates.split("\\s");
             int[] coordinates = new int[4];
@@ -255,6 +306,38 @@ public class Battlefield {
             return coordinates;
         }
 
+        /**
+         * Get shot coordinates from user input
+         * @return array of coordinates
+         */
+        public int[] getShotCoordinates() {
+            String stringCoordinates;
+
+            do {
+                stringCoordinates = scanner.nextLine();
+            } while (!checkCoordinates(stringCoordinates));
+
+            int[] intCoordinates = new int[2];
+            intCoordinates[0] = stringCoordinates.charAt(0) - 'A';
+            intCoordinates[1] = Integer.parseInt(stringCoordinates.substring(1)) - 1;
+
+            return intCoordinates;
+        }
+
+        /**
+         * Check if the user entered coordinates in an appropriate format
+         * @param stringCoordinates shot coordinates
+         * @return result of the checking
+         */
+        private boolean checkCoordinates(String stringCoordinates) {
+            if (!stringCoordinates.matches("[A-J]\\d+") ||
+                    Integer.parseInt(stringCoordinates.substring(1)) > 10
+            ) {
+                System.out.println("Error! You entered the wrong coordinates! Try again:\n");
+                return false;
+            }
+            return true;
+        }
     }
 
 }

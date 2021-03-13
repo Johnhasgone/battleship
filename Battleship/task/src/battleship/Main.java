@@ -7,6 +7,7 @@ public class Main {
         Battlefield battlefield = new Battlefield();
         battlefield.printField();
         battlefield.fillTheField();
+        battlefield.startTheGame();
 
     }
 }
