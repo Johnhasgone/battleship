@@ -182,33 +182,72 @@ public class Battlefield {
     }
 
     /**
-     * Start the game (prints the field after ship placement and gets the user shot)
+     * Start the game (gets the user shots until all the ships sink)
      */
     public void startTheGame() {
         System.out.println("\nThe game starts!");
         printField(fogField);
-        takeAShot();
+
+        System.out.println("\nTake a shot!");
+        int aliveCells = Arrays.stream(Ships.values())
+                .map(Ships::getValue)
+                .reduce(0, Integer::sum);
+
+        while(aliveCells > 0) {
+            ShotResult shotResult = takeAShot();
+            printField(fogField);
+            if (shotResult == ShotResult.HIT) {
+                aliveCells--;
+                System.out.println("\nYou hit a ship! Try again:");
+            } else if (shotResult == ShotResult.SANK) {
+                aliveCells--;
+                System.out.println(
+                        aliveCells != 0
+                        ? "\nYou sank a ship! Specify a new target:"
+                        : "\nYou sank the last ship. You won. Congratulations!"
+                );
+            } else {
+                System.out.println("\nYou missed! Try again:");
+            }
+        }
     }
 
     /**
      * Take a shot
+     * @return ShotResult result of the shot (MISS, SANK or HIT)
      */
-    private void takeAShot() {
+    private ShotResult takeAShot() {
         int[] coord = inputHandler.getShotCoordinates();
-        boolean success;
+        ShotResult result;
         if (field[coord[0]][coord[1]] == cell) {
             field[coord[0]][coord[1]] = hit;
             fogField[coord[0]][coord[1]] = hit;
-            success = true;
+            if (checkShipSank(coord))
+                result = ShotResult.SANK;
+            else
+                result = ShotResult.HIT;
         }
-        else {
+        else if (field[coord[0]][coord[1]] == fog) {
             field[coord[0]][coord[1]] = miss;
             fogField[coord[0]][coord[1]] = miss;
-            success = false;
+            result = ShotResult.MISS;
         }
-        printField(fogField);
-        System.out.println(success ? "\nYou hit a ship!" : "\nYou missed!");
-        printField(field);
+        else
+            result = ShotResult.MISS;
+        return result;
+    }
+
+    /**
+     * Checks if there is no ship cells next to the successive shot
+     * @param coord successive shot coordinates
+     * @return true if there is no ship cells next to successive shot coordinates, false otherwise
+     */
+    private boolean checkShipSank(int[] coord) {
+
+        return (coord[0] == 0 || field[coord[0] - 1][coord[1]] != cell) &&
+                (coord[0] == (height - 1) || field[coord[0] + 1][coord[1]] != cell) &&
+                (coord[1] == 0 || field[coord[0]][coord[1] - 1] != cell) &&
+                (coord[1] == width - 1 || field[coord[0]][coord[1] + 1] != cell);
 
     }
 
@@ -344,6 +383,12 @@ public class Battlefield {
             }
             return true;
         }
+    }
+
+    enum ShotResult {
+        HIT,
+        SANK,
+        MISS
     }
 
 }
